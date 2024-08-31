@@ -183,7 +183,7 @@ public:
     }
 };
 
-struct TinyAutoEncoder : public GGMLRunner {
+struct TinyAutoEncoder : public GGMLModule {
     TAESD taesd;
     bool decode_only = false;
 
@@ -192,7 +192,7 @@ struct TinyAutoEncoder : public GGMLRunner {
                     bool decoder_only = true)
         : decode_only(decoder_only),
           taesd(decode_only),
-          GGMLRunner(backend, wtype) {
+          GGMLModule(backend, wtype) {
         taesd.init(params_ctx, wtype);
     }
 
@@ -200,8 +200,16 @@ struct TinyAutoEncoder : public GGMLRunner {
         return "taesd";
     }
 
+    size_t get_params_mem_size() {
+        return taesd.get_params_mem_size();
+    }
+
+    size_t get_params_num() {
+        return taesd.get_params_num();
+    }
+
     bool load_from_file(const std::string& file_path) {
-        LOG_INFO("loading taesd from '%s', decode_only = %s", file_path.c_str(), decode_only ? "true" : "false");
+        LOG_INFO("loading taesd from '%s'", file_path.c_str());
         alloc_params_buffer();
         std::map<std::string, ggml_tensor*> taesd_tensors;
         taesd.get_param_tensors(taesd_tensors);
@@ -244,7 +252,7 @@ struct TinyAutoEncoder : public GGMLRunner {
             return build_graph(z, decode_graph);
         };
 
-        GGMLRunner::compute(get_graph, n_threads, false, output, output_ctx);
+        GGMLModule::compute(get_graph, n_threads, false, output, output_ctx);
     }
 };
 

@@ -42,13 +42,13 @@ public:
         auto conv5 = std::dynamic_pointer_cast<Conv2d>(blocks["conv5"]);
 
         auto x1    = lrelu(ctx, conv1->forward(ctx, x));
-        auto x_cat = ggml_concat(ctx, x, x1, 2);
+        auto x_cat = ggml_concat(ctx, x, x1);
         auto x2    = lrelu(ctx, conv2->forward(ctx, x_cat));
-        x_cat      = ggml_concat(ctx, x_cat, x2, 2);
+        x_cat      = ggml_concat(ctx, x_cat, x2);
         auto x3    = lrelu(ctx, conv3->forward(ctx, x_cat));
-        x_cat      = ggml_concat(ctx, x_cat, x3, 2);
+        x_cat      = ggml_concat(ctx, x_cat, x3);
         auto x4    = lrelu(ctx, conv4->forward(ctx, x_cat));
-        x_cat      = ggml_concat(ctx, x_cat, x4, 2);
+        x_cat      = ggml_concat(ctx, x_cat, x4);
         auto x5    = conv5->forward(ctx, x_cat);
 
         x5 = ggml_add(ctx, ggml_scale(ctx, x5, 0.2f), x);
@@ -137,19 +137,27 @@ public:
     }
 };
 
-struct ESRGAN : public GGMLRunner {
+struct ESRGAN : public GGMLModule {
     RRDBNet rrdb_net;
     int scale     = 4;
     int tile_size = 128;  // avoid cuda OOM for 4gb VRAM
 
     ESRGAN(ggml_backend_t backend,
            ggml_type wtype)
-        : GGMLRunner(backend, wtype) {
+        : GGMLModule(backend, wtype) {
         rrdb_net.init(params_ctx, wtype);
     }
 
     std::string get_desc() {
         return "esrgan";
+    }
+
+    size_t get_params_mem_size() {
+        return rrdb_net.get_params_mem_size();
+    }
+
+    size_t get_params_num() {
+        return rrdb_net.get_params_num();
     }
 
     bool load_from_file(const std::string& file_path) {
@@ -191,7 +199,7 @@ struct ESRGAN : public GGMLRunner {
         auto get_graph = [&]() -> struct ggml_cgraph* {
             return build_graph(x);
         };
-        GGMLRunner::compute(get_graph, n_threads, false, output, output_ctx);
+        GGMLModule::compute(get_graph, n_threads, false, output, output_ctx);
     }
 };
 

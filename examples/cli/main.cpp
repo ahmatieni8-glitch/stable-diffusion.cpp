@@ -7,7 +7,6 @@
 #include <vector>
 
 // #include "preprocessing.hpp"
-#include "flux.hpp"
 #include "stable-diffusion.h"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -18,8 +17,6 @@
 #define STB_IMAGE_WRITE_STATIC
 #include "stb_image_write.h"
 
-#define STB_IMAGE_RESIZE_IMPLEMENTATION
-#define STB_IMAGE_RESIZE_STATIC
 #include "stb_image_resize.h"
 
 const char* rng_type_to_str[] = {
@@ -36,8 +33,6 @@ const char* sample_method_str[] = {
     "dpm++2s_a",
     "dpm++2m",
     "dpm++2mv2",
-    "ipndm",
-    "ipndm_v",
     "lcm",
 };
 
@@ -46,9 +41,6 @@ const char* schedule_str[] = {
     "default",
     "discrete",
     "karras",
-    "exponential",
-    "ays",
-    "gits",
 };
 
 const char* modes_str[] = {
@@ -71,9 +63,6 @@ struct SDParams {
     SDMode mode   = TXT2IMG;
 
     std::string model_path;
-    std::string clip_l_path;
-    std::string t5xxl_path;
-    std::string diffusion_model_path;
     std::string vae_path;
     std::string taesd_path;
     std::string esrgan_path;
@@ -91,7 +80,6 @@ struct SDParams {
     std::string negative_prompt;
     float min_cfg     = 1.0f;
     float cfg_scale   = 7.0f;
-    float guidance    = 3.5f;
     float style_ratio = 20.f;
     int clip_skip     = -1;  // <= 0 represents unspecified
     int width         = 512;
@@ -127,9 +115,6 @@ void print_params(SDParams params) {
     printf("    mode:              %s\n", modes_str[params.mode]);
     printf("    model_path:        %s\n", params.model_path.c_str());
     printf("    wtype:             %s\n", params.wtype < SD_TYPE_COUNT ? sd_type_name(params.wtype) : "unspecified");
-    printf("    clip_l_path:       %s\n", params.clip_l_path.c_str());
-    printf("    t5xxl_path:        %s\n", params.t5xxl_path.c_str());
-    printf("    diffusion_model_path:   %s\n", params.diffusion_model_path.c_str());
     printf("    vae_path:          %s\n", params.vae_path.c_str());
     printf("    taesd_path:        %s\n", params.taesd_path.c_str());
     printf("    esrgan_path:       %s\n", params.esrgan_path.c_str());
@@ -138,7 +123,7 @@ void print_params(SDParams params) {
     printf("    stacked_id_embeddings_path:   %s\n", params.stacked_id_embeddings_path.c_str());
     printf("    input_id_images_path:   %s\n", params.input_id_images_path.c_str());
     printf("    style ratio:       %.2f\n", params.style_ratio);
-    printf("    normalize input image :  %s\n", params.normalize_input ? "true" : "false");
+    printf("    normzalize input image :  %s\n", params.normalize_input ? "true" : "false");
     printf("    output_path:       %s\n", params.output_path.c_str());
     printf("    init_img:          %s\n", params.input_path.c_str());
     printf("    control_image:     %s\n", params.control_image_path.c_str());
@@ -150,7 +135,6 @@ void print_params(SDParams params) {
     printf("    negative_prompt:   %s\n", params.negative_prompt.c_str());
     printf("    min_cfg:           %.2f\n", params.min_cfg);
     printf("    cfg_scale:         %.2f\n", params.cfg_scale);
-    printf("    guidance:          %.2f\n", params.guidance);
     printf("    clip_skip:         %d\n", params.clip_skip);
     printf("    width:             %d\n", params.width);
     printf("    height:            %d\n", params.height);
@@ -173,10 +157,7 @@ void print_usage(int argc, const char* argv[]) {
     printf("  -M, --mode [MODEL]                 run mode (txt2img or img2img or convert, default: txt2img)\n");
     printf("  -t, --threads N                    number of threads to use during computation (default: -1).\n");
     printf("                                     If threads <= 0, then threads will be set to the number of CPU physical cores\n");
-    printf("  -m, --model [MODEL]                path to full model\n");
-    printf("  --diffusion-model                  path to the standalone diffusion model\n");
-    printf("  --clip_l                           path to the clip-l text encoder\n");
-    printf("  --t5xxl                            path to the the t5xxl text encoder.\n");
+    printf("  -m, --model [MODEL]                path to model\n");
     printf("  --vae [VAE]                        path to vae\n");
     printf("  --taesd [TAESD_PATH]               path to taesd. Using Tiny AutoEncoder for fast decoding (low quality)\n");
     printf("  --control-net [CONTROL_PATH]       path to control net model\n");
@@ -186,7 +167,7 @@ void print_usage(int argc, const char* argv[]) {
     printf("  --normalize-input                  normalize PHOTOMAKER input id images\n");
     printf("  --upscale-model [ESRGAN_PATH]      path to esrgan model. Upscale images after generate, just RealESRGAN_x4plus_anime_6B supported by now.\n");
     printf("  --upscale-repeats                  Run the ESRGAN upscaler this many times (default 1)\n");
-    printf("  --type [TYPE]                      weight type (f32, f16, q4_0, q4_1, q5_0, q5_1, q8_0, q2_k, q3_k, q4_k)\n");
+    printf("  --type [TYPE]                      weight type (f32, f16, q4_0, q4_1, q5_0, q5_1, q8_0)\n");
     printf("                                     If not specified, the default is the type of the weight file.\n");
     printf("  --lora-model-dir [DIR]             lora model directory\n");
     printf("  -i, --init-img [IMAGE]             path to the input image, required by img2img\n");
@@ -201,21 +182,18 @@ void print_usage(int argc, const char* argv[]) {
     printf("                                     1.0 corresponds to full destruction of information in init image\n");
     printf("  -H, --height H                     image height, in pixel space (default: 512)\n");
     printf("  -W, --width W                      image width, in pixel space (default: 512)\n");
-    printf("  --sampling-method {euler, euler_a, heun, dpm2, dpm++2s_a, dpm++2m, dpm++2mv2, ipndm, ipndm_v, lcm}\n");
+    printf("  --sampling-method {euler, euler_a, heun, dpm2, dpm++2s_a, dpm++2m, dpm++2mv2, lcm}\n");
     printf("                                     sampling method (default: \"euler_a\")\n");
     printf("  --steps  STEPS                     number of sample steps (default: 20)\n");
     printf("  --rng {std_default, cuda}          RNG (default: cuda)\n");
     printf("  -s SEED, --seed SEED               RNG seed (default: 42, use random seed for < 0)\n");
     printf("  -b, --batch-count COUNT            number of images to generate.\n");
-    printf("  --schedule {discrete, karras, exponential, ays, gits} Denoiser sigma schedule (default: discrete)\n");
+    printf("  --schedule {discrete, karras}      Denoiser sigma schedule (default: discrete)\n");
     printf("  --clip-skip N                      ignore last layers of CLIP network; 1 ignores none, 2 ignores one layer (default: -1)\n");
     printf("                                     <= 0 represents unspecified, will be 1 for SD1.x, 2 for SD2.x\n");
     printf("  --vae-tiling                       process vae in tiles to reduce memory usage\n");
-    printf("  --vae-on-cpu                       keep vae in cpu (for low vram)\n");
-    printf("  --clip-on-cpu                      keep clip in cpu (for low vram).\n");
     printf("  --control-net-cpu                  keep controlnet in cpu (for low vram)\n");
     printf("  --canny                            apply canny preprocessor (edge detection)\n");
-    printf("  --color                            Colors the logging tags according to level\n");
     printf("  -v, --verbose                      print extra info\n");
 }
 
@@ -256,24 +234,6 @@ void parse_args(int argc, const char** argv, SDParams& params) {
                 break;
             }
             params.model_path = argv[i];
-        } else if (arg == "--clip_l") {
-            if (++i >= argc) {
-                invalid_arg = true;
-                break;
-            }
-            params.clip_l_path = argv[i];
-        } else if (arg == "--t5xxl") {
-            if (++i >= argc) {
-                invalid_arg = true;
-                break;
-            }
-            params.t5xxl_path = argv[i];
-        } else if (arg == "--diffusion-model") {
-            if (++i >= argc) {
-                invalid_arg = true;
-                break;
-            }
-            params.diffusion_model_path = argv[i];
         } else if (arg == "--vae") {
             if (++i >= argc) {
                 invalid_arg = true;
@@ -336,14 +296,8 @@ void parse_args(int argc, const char** argv, SDParams& params) {
                 params.wtype = SD_TYPE_Q5_1;
             } else if (type == "q8_0") {
                 params.wtype = SD_TYPE_Q8_0;
-            } else if (type == "q2_k") {
-                params.wtype = SD_TYPE_Q2_K;
-            } else if (type == "q3_k") {
-                params.wtype = SD_TYPE_Q3_K;
-            } else if (type == "q4_k") {
-                params.wtype = SD_TYPE_Q4_K;
             } else {
-                fprintf(stderr, "error: invalid weight format %s, must be one of [f32, f16, q4_0, q4_1, q5_0, q5_1, q8_0, q2_k, q3_k, q4_k]\n",
+                fprintf(stderr, "error: invalid weight format %s, must be one of [f32, f16, q4_0, q4_1, q5_0, q5_1, q8_0]\n",
                         type.c_str());
                 exit(1);
             }
@@ -399,12 +353,6 @@ void parse_args(int argc, const char** argv, SDParams& params) {
                 break;
             }
             params.cfg_scale = std::stof(argv[i]);
-        } else if (arg == "--guidance") {
-            if (++i >= argc) {
-                invalid_arg = true;
-                break;
-            }
-            params.guidance = std::stof(argv[i]);
         } else if (arg == "--strength") {
             if (++i >= argc) {
                 invalid_arg = true;
@@ -547,8 +495,8 @@ void parse_args(int argc, const char** argv, SDParams& params) {
         exit(1);
     }
 
-    if (params.model_path.length() == 0 && params.diffusion_model_path.length() == 0) {
-        fprintf(stderr, "error: the following arguments are required: model_path/diffusion_model\n");
+    if (params.model_path.length() == 0) {
+        fprintf(stderr, "error: the following arguments are required: model_path\n");
         print_usage(argc, argv);
         exit(1);
     }
@@ -616,7 +564,6 @@ std::string get_image_params(SDParams params, int64_t seed) {
     }
     parameter_string += "Steps: " + std::to_string(params.sample_steps) + ", ";
     parameter_string += "CFG scale: " + std::to_string(params.cfg_scale) + ", ";
-    parameter_string += "Guidance: " + std::to_string(params.guidance) + ", ";
     parameter_string += "Seed: " + std::to_string(seed) + ", ";
     parameter_string += "Size: " + std::to_string(params.width) + "x" + std::to_string(params.height) + ", ";
     parameter_string += "Model: " + sd_basename(params.model_path) + ", ";
@@ -675,7 +622,6 @@ void sd_log_cb(enum sd_log_level_t level, const char* log, void* data) {
 
 int main(int argc, const char* argv[]) {
     SDParams params;
-
     parse_args(argc, argv, params);
 
     sd_set_log_callback(sd_log_cb, (void*)&params);
@@ -708,16 +654,13 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
 
-    bool vae_decode_only          = true;
-    uint8_t* input_image_buffer   = NULL;
-    uint8_t* control_image_buffer = NULL;
+    bool vae_decode_only        = true;
+    uint8_t* input_image_buffer = NULL;
     if (params.mode == IMG2IMG || params.mode == IMG2VID) {
         vae_decode_only = false;
 
         int c              = 0;
-        int width          = 0;
-        int height         = 0;
-        input_image_buffer = stbi_load(params.input_path.c_str(), &width, &height, &c, 3);
+        input_image_buffer = stbi_load(params.input_path.c_str(), &params.width, &params.height, &c, 3);
         if (input_image_buffer == NULL) {
             fprintf(stderr, "load image from '%s' failed\n", params.input_path.c_str());
             return 1;
@@ -727,46 +670,45 @@ int main(int argc, const char* argv[]) {
             free(input_image_buffer);
             return 1;
         }
-        if (width <= 0) {
+        if (params.width <= 0) {
             fprintf(stderr, "error: the width of image must be greater than 0\n");
             free(input_image_buffer);
             return 1;
         }
-        if (height <= 0) {
+        if (params.height <= 0) {
             fprintf(stderr, "error: the height of image must be greater than 0\n");
             free(input_image_buffer);
             return 1;
         }
 
         // Resize input image ...
-        if (params.height != height || params.width != width) {
-            printf("resize input image from %dx%d to %dx%d\n", width, height, params.width, params.height);
-            int resized_height = params.height;
-            int resized_width  = params.width;
+        if (params.height % 64 != 0 || params.width % 64 != 0) {
+            int resized_height = params.height + (64 - params.height % 64);
+            int resized_width = params.width + (64 - params.width % 64);
 
-            uint8_t* resized_image_buffer = (uint8_t*)malloc(resized_height * resized_width * 3);
+            uint8_t *resized_image_buffer = (uint8_t *)malloc(resized_height * resized_width * 3);
             if (resized_image_buffer == NULL) {
                 fprintf(stderr, "error: allocate memory for resize input image\n");
                 free(input_image_buffer);
                 return 1;
             }
-            stbir_resize(input_image_buffer, width, height, 0,
-                         resized_image_buffer, resized_width, resized_height, 0, STBIR_TYPE_UINT8,
-                         3 /*RGB channel*/, STBIR_ALPHA_CHANNEL_NONE, 0,
-                         STBIR_EDGE_CLAMP, STBIR_EDGE_CLAMP,
-                         STBIR_FILTER_BOX, STBIR_FILTER_BOX,
-                         STBIR_COLORSPACE_SRGB, nullptr);
+            stbir_resize(input_image_buffer, params.width, params.height, 0, 
+                resized_image_buffer, resized_width, resized_height, 0, STBIR_TYPE_UINT8, 
+                3 /*RGB channel*/, STBIR_ALPHA_CHANNEL_NONE, 0,
+                STBIR_EDGE_CLAMP, STBIR_EDGE_CLAMP,
+                STBIR_FILTER_BOX, STBIR_FILTER_BOX,
+                STBIR_COLORSPACE_SRGB, nullptr
+            );
 
             // Save resized result
             free(input_image_buffer);
             input_image_buffer = resized_image_buffer;
+            params.height = resized_height;
+            params.width = resized_width;
         }
     }
 
     sd_ctx_t* sd_ctx = new_sd_ctx(params.model_path.c_str(),
-                                  params.clip_l_path.c_str(),
-                                  params.t5xxl_path.c_str(),
-                                  params.diffusion_model_path.c_str(),
                                   params.vae_path.c_str(),
                                   params.taesd_path.c_str(),
                                   params.controlnet_path.c_str(),
@@ -789,38 +731,36 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
 
-    sd_image_t* control_image = NULL;
-    if (params.controlnet_path.size() > 0 && params.control_image_path.size() > 0) {
-        int c                = 0;
-        control_image_buffer = stbi_load(params.control_image_path.c_str(), &params.width, &params.height, &c, 3);
-        if (control_image_buffer == NULL) {
-            fprintf(stderr, "load image from '%s' failed\n", params.control_image_path.c_str());
-            return 1;
-        }
-        control_image = new sd_image_t{(uint32_t)params.width,
-                                       (uint32_t)params.height,
-                                       3,
-                                       control_image_buffer};
-        if (params.canny_preprocess) {  // apply preprocessor
-            control_image->data = preprocess_canny(control_image->data,
-                                                   control_image->width,
-                                                   control_image->height,
-                                                   0.08f,
-                                                   0.08f,
-                                                   0.8f,
-                                                   1.0f,
-                                                   false);
-        }
-    }
-
     sd_image_t* results;
     if (params.mode == TXT2IMG) {
+        sd_image_t* control_image = NULL;
+        if (params.controlnet_path.size() > 0 && params.control_image_path.size() > 0) {
+            int c              = 0;
+            input_image_buffer = stbi_load(params.control_image_path.c_str(), &params.width, &params.height, &c, 3);
+            if (input_image_buffer == NULL) {
+                fprintf(stderr, "load image from '%s' failed\n", params.control_image_path.c_str());
+                return 1;
+            }
+            control_image = new sd_image_t{(uint32_t)params.width,
+                                           (uint32_t)params.height,
+                                           3,
+                                           input_image_buffer};
+            if (params.canny_preprocess) {  // apply preprocessor
+                control_image->data = preprocess_canny(control_image->data,
+                                                       control_image->width,
+                                                       control_image->height,
+                                                       0.08f,
+                                                       0.08f,
+                                                       0.8f,
+                                                       1.0f,
+                                                       false);
+            }
+        }
         results = txt2img(sd_ctx,
                           params.prompt.c_str(),
                           params.negative_prompt.c_str(),
                           params.clip_skip,
                           params.cfg_scale,
-                          params.guidance,
                           params.width,
                           params.height,
                           params.sample_method,
@@ -881,19 +821,13 @@ int main(int argc, const char* argv[]) {
                               params.negative_prompt.c_str(),
                               params.clip_skip,
                               params.cfg_scale,
-                              params.guidance,
                               params.width,
                               params.height,
                               params.sample_method,
                               params.sample_steps,
                               params.strength,
                               params.seed,
-                              params.batch_count,
-                              control_image,
-                              params.control_strength,
-                              params.style_ratio,
-                              params.normalize_input,
-                              params.input_id_images_path.c_str());
+                              params.batch_count);
         }
     }
 
@@ -946,8 +880,6 @@ int main(int argc, const char* argv[]) {
     }
     free(results);
     free_sd_ctx(sd_ctx);
-    free(control_image_buffer);
-    free(input_image_buffer);
 
     return 0;
 }
