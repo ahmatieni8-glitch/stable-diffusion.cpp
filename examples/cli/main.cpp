@@ -674,7 +674,7 @@ void sd_log_cb(enum sd_log_level_t level, const char* log, void* data) {
 }
 
 #ifdef SD_EXAMPLES_GLOVE_GUI
-#include "gui/main_glove.h"
+#include "main_glove.h"
 #endif
 
 int main(int argc, char* argv[]) {

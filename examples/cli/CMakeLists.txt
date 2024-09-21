@@ -1,7 +1,7 @@
 set(TARGET sd)
 
 if(SD_EXAMPLES_GLOVE_GUI)
-add_executable(${TARGET} main.cpp gui/main_glove.h gui/glove.h)
+add_executable(${TARGET} main.cpp main_glove.h ${CMAKE_SOURCE_DIR}/thirdparty/glove.h)
 target_compile_definitions(${TARGET} PUBLIC -D SD_EXAMPLES_GLOVE_GUI)
 target_link_libraries(${TARGET} PRIVATE stable-diffusion ${CMAKE_THREAD_LIBS_INIT} Qt${QT_VERSION}::Widgets)
 if(MSVC)
