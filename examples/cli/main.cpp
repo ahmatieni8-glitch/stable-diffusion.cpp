@@ -702,6 +702,7 @@ int main(int argc, char* argv[]) {
 #ifdef SD_EXAMPLES_GLOVE_GUI
     GlvApp::get_progression("Model");
     GlvApp::get_progression("clip_l");
+    GlvApp::get_progression("clip_g");
     GlvApp::get_progression("t5xxl");
     GlvApp::get_progression("diffusion-model");
     GlvApp::get_progression("VAE");

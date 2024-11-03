@@ -11,18 +11,18 @@ glvm_SlvEnum(Rng, std_default, cuda);
 glvm_SlvEnum(Schedule, discrete, karras, exponential, ays, gits);
 
 glvm_parametrization(GlvSDParamsPhotomaker, "Photomaker params",
-                        stacked_id_embd_dir, SlvDirectory, "--stacked-id-embd-dir", "path to PHOTOMAKER stacked id embeddings.", SlvDirectory(),
-                        input_id_images_dir, SlvDirectory, "--input-id-images-dir", "path to PHOTOMAKER input id images dir.", SlvDirectory(),
+                        stacked_id_embd_dir, SlvDirectory, "--stacked-id-embd-dir", "path to PHOTOMAKER stacked id embeddings", SlvDirectory(),
+                        input_id_images_dir, SlvDirectory, "--input-id-images-dir", "path to PHOTOMAKER input id images dir", SlvDirectory(),
                         normalize_input, bool, "--normalize-input", "normalize PHOTOMAKER input id images", false);
 
 glvm_parametrization(GlvSDParamsAdvanced, "Advanced params",
-                        threads, int, "--threads", "number of threads to use during computation (default: -1). \nIf threads <= 0, then threads will be set to the number of CPU physical cores", -1,
+                        threads, int, "--threads", "number of threads to use during computation (default: -1) \nIf threads <= 0, then threads will be set to the number of CPU physical cores", -1,
                         taesd, SlvFile, "--taesd", "path to taesd. Using Tiny AutoEncoder for fast decoding (low quality)", SlvFile(SlvFile::IO::Read),
                         control_net, SlvFile, "--control-net", "path to control net model", SlvFile(SlvFile::IO::Read),
-                        embd_dir, SlvDirectory, "--embd-dir", "path to embeddings.", SlvDirectory(),
-                        upscale_model, SlvFile, "--upscale-model", "path to esrgan model. Upscale images after generate, just RealESRGAN_x4plus_anime_6B supported by now.", SlvFile(SlvFile::IO::Read),
+                        embd_dir, SlvDirectory, "--embd-dir", "path to embeddings", SlvDirectory(),
+                        upscale_model, SlvFile, "--upscale-model", "path to esrgan model. Upscale images after generate, just RealESRGAN_x4plus_anime_6B supported by now", SlvFile(SlvFile::IO::Read),
                         upscale_repeats, unsigned int, "--upscale-repeats", "Run the ESRGAN upscaler this many times (default 1)", 1,
-                        type, WeightType, "--type", "weight type (f32, f16, q4_0, q4_1, q5_0, q5_1, q8_0, q2_k, q3_k, q4_k) \nIf not specified, the default is the type of the weight file.", WeightType::weight_file_type,
+                        type, WeightType, "--type", "weight type (f32, f16, q4_0, q4_1, q5_0, q5_1, q8_0, q2_k, q3_k, q4_k) \nIf not specified, the default is the type of the weight file", WeightType::weight_file_type,
                         schedule, Schedule, "--schedule", "Denoiser sigma schedule (default: discrete)", Schedule::discrete,
                         clip_skip, int, "--clip-skip", "ignore last layers of CLIP network; 1 ignores none, 2 ignores one layer (default: -1) \n<= 0 represents unspecified, will be 1 for SD1.x, 2 for SD2.x", -1,
                         vae_tiling, bool, "--vae-tiling", "process vae in tiles to reduce memory usage", false,
@@ -35,6 +35,7 @@ glvm_parametrization(GlvSDParamsAdvanced, "Advanced params",
 
 glvm_parametrization(GlvSDModelAddons, "SD model addons",
     clip_l, SlvFile, "--clip_l", "path to the clip-l text encoder", SlvFile(SlvFile::IO::Read),
+    clip_g, SlvFile, "--clip_g", "path to the clip-g text encoder", SlvFile(SlvFile::IO::Read),
     t5xxl, SlvFile, "--t5xxl", "path to the the t5xxl text encoder", SlvFile(SlvFile::IO::Read),
     vae, SlvFile, "--vae", "path to vae", SlvFile("", SlvFileExtensions({".safetensors", ".sft"}), SlvFile::IO::Read),
     lora_model_dir, SlvDirectory, "--lora-model-dir", "lora model directory", SlvDirectory())
@@ -60,7 +61,7 @@ glvm_parametrization(GlvSDParams, "SD params",
     steps, unsigned int, "--steps", "number of sample steps (default: 20)", 20,
     rng, Rng, "--rng", "RNG (default: cuda)", Rng::cuda,
     seed, int, "--seed", "RNG seed (default: 42, use random seed for < 0)", 42,
-    batch_count, unsigned int, "--batch-count", "number of images to generate.", 1,
+    batch_count, unsigned int, "--batch-count", "number of images to generate", 1,
     advanced_params, GlvSDParamsAdvanced, "Advanced", "", GlvSDParamsAdvanced())
 
 GLOVE_APP_CLI_PARAMETRIZATION_OUTPUT_DIRECTORY(GlvSDParams, "--output")

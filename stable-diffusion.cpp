@@ -217,6 +217,8 @@ public:
         }
 
         if (clip_g_path.size() > 0) {
+            GlvApp::get_progression("clip_g")->set_message("Loading " + SlvFile(clip_g_path).get_file_name().get_total_name());
+            GlvApp::get_progression("clip_g")->start();
             LOG_INFO("loading clip_g from '%s'", clip_g_path.c_str());
             if (!model_loader.init_from_file(clip_g_path, "text_encoders.clip_g.transformer.")) {
                 LOG_WARN("loading clip_g from '%s' failed", clip_g_path.c_str());
@@ -525,6 +527,7 @@ public:
         LOG_INFO("loading model from '%s' completed, taking %.2fs", model_path.c_str(), (t1 - t0) * 1.0f / 1000);
         GlvApp::get_progression("Model")->end();
         GlvApp::get_progression("clip_l")->end();
+        GlvApp::get_progression("clip_g")->end();
         GlvApp::get_progression("t5xxl")->end();
         GlvApp::get_progression("diffusion-model")->end();
         GlvApp::get_progression("VAE")->end();
