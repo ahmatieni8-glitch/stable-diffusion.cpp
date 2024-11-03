@@ -51,6 +51,7 @@ This repository is a fork of [stable-diffusion.cpp](https://github.com/leejet/st
   sd -glove
   ```
   and the terminal will be visible.
+  In both cases, CLI arguments of SD examples remain operational.
   
 
 - On Windows, if DLLs are missing, go to the <code>sd</code> executable directory and apply the command:
