@@ -543,18 +543,27 @@ void parse_args(int argc, const char** argv, SDParams& params) {
 
     if (params.mode != CONVERT && params.mode != IMG2VID && params.prompt.length() == 0) {
         fprintf(stderr, "error: the following arguments are required: prompt\n");
+#ifdef SD_EXAMPLES_GLOVE_GUI
+        GlvApp::show(SlvStatus(SlvStatus::statusType::warning, "error: the following arguments are required: prompt\n"), true);
+#endif
         print_usage(argc, argv);
         exit(1);
     }
 
     if (params.model_path.length() == 0 && params.diffusion_model_path.length() == 0) {
         fprintf(stderr, "error: the following arguments are required: model_path/diffusion_model\n");
+#ifdef SD_EXAMPLES_GLOVE_GUI
+        GlvApp::show(SlvStatus(SlvStatus::statusType::warning, "error: the following arguments are required: model_path/diffusion_model\n"), true);
+#endif
         print_usage(argc, argv);
         exit(1);
     }
 
     if ((params.mode == IMG2IMG || params.mode == IMG2VID) && params.input_path.length() == 0) {
         fprintf(stderr, "error: when using the img2img mode, the following arguments are required: init-img\n");
+#ifdef SD_EXAMPLES_GLOVE_GUI
+        GlvApp::show(SlvStatus(SlvStatus::statusType::warning, "error: when using the img2img mode, the following arguments are required: init-img\n"), true);
+#endif
         print_usage(argc, argv);
         exit(1);
     }
@@ -675,12 +684,30 @@ void sd_log_cb(enum sd_log_level_t level, const char* log, void* data) {
 
 #ifdef SD_EXAMPLES_GLOVE_GUI
 #include "main_glove.h"
+#ifdef SD_EXAMPLES_GLOVE_GUI_DESKTOP
+#pragma GLOVE_APP_MSVC_NO_CONSOLE
+#endif
 #endif
 
 int main(int argc, char* argv[]) {
 
 #ifdef SD_EXAMPLES_GLOVE_GUI
-    GLOVE_CLI(GlvSDParams);
+    GlvApp::get_progression("Model");
+    GlvApp::get_progression("clip_l");
+    GlvApp::get_progression("t5xxl");
+    GlvApp::get_progression("diffusion-model");
+    GlvApp::get_progression("VAE");
+    GlvApp::get_progression("LoRA");
+    GlvApp::get_progression("Batch");
+    GlvApp::get_progression("Generating image")->set_recurrent(true);
+    GlvApp::get_progression("Decoding");
+    GlvApp::get_progression("Result");
+
+#ifdef SD_EXAMPLES_GLOVE_GUI_DESKTOP
+    GLOVE_APP_PARAM_AUTO(GlvSDParams);
+#else
+    GLOVE_APP_PARAM(GlvSDParams);
+#endif
 #endif
 
     SDParams params;
@@ -943,7 +970,10 @@ int main(int argc, char* argv[]) {
 
     size_t last            = params.output_path.find_last_of(".");
     std::string dummy_name = last != std::string::npos ? params.output_path.substr(0, last) : params.output_path;
-    for (int i = 0; i < params.batch_count; i++) {
+    GlvApp::get_progression("Result")->set_message("Saving images");
+    SlvProgressionQt& p = *GlvApp::get_progression("Result");
+    for (p = 0; p << params.batch_count; p++) {
+        int i = p;
         if (results[i].data == NULL) {
             continue;
         }

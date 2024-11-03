@@ -5,8 +5,10 @@
 #ifndef SD_BUILD_SHARED_LIB
 #define SD_API
 #else
+#define GLOVE_APP_SHARED
 #ifdef SD_BUILD_DLL
 #define SD_API __declspec(dllexport)
+#define GLOVE_APP_SHARED_EXPORT
 #else
 #define SD_API __declspec(dllimport)
 #endif

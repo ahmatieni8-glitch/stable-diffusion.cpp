@@ -1,6 +1,6 @@
 # stable-diffusion.cpp : GUI of command line interface
 
-This repository is a fork of [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp). It only adds a GUI interface to the executable generating examples. It will be updated according to the master repository developments (evolution of the parameters).
+This repository is a fork of [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp). It adds a GUI interface to the executable generating examples. It will be updated according to the master repository developments (evolution of the parameters).
 
 <p align="center">
   <img src="./assets/sd-example.png" width="360x">
@@ -13,12 +13,8 @@ This repository is a fork of [stable-diffusion.cpp](https://github.com/leejet/st
   ```cmake
   -DSD_BUILD_EXAMPLES=ON -DSD_EXAMPLES_GLOVE_GUI=ON
   ```
-  
-   then instead of CLI arguments use:
-  
-  ```sh
-  sd -glove
-  ```
+
+## Features
 
 - Parameters saving as *json*, upon acceptance (*Ok* button):
   
@@ -31,8 +27,33 @@ This repository is a fork of [stable-diffusion.cpp](https://github.com/leejet/st
   - Parameters can be loaded
     - by using the *Load* button
     - or: <code>sd -glove 'path-to-parameters-file'</code>
+	
+- Progress :
 
-- On Windows, if DLLs are missing, go to the <code>sd</code> executable directory and do:
+  - Monitoring of progression
+  - Possibility to cancel
+
+<p align="center">
+  <img src="./assets/sd-example-progress.png" width="200x">
+</p>
+
+- Warning/error messages display
+	
+## Misc
+
+- By default, the setup is configured for a desktop application (i.e. : launch using executable icon on desktop).
+  One can disable this default behaviour by additionaly setting the following CMake command:
+  ```cmake
+  -DSD_EXAMPLES_GLOVE_GUI_DESKTOP=OFF
+  ```
+  In this case, the GUI will be accessible using the following CLI argument:
+  ```sh
+  sd -glove
+  ```
+  and the terminal will be visible.
+  
+
+- On Windows, if DLLs are missing, go to the <code>sd</code> executable directory and apply the command:
   
   ```sh
   windeployqt.exe sd.exe

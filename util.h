@@ -54,8 +54,21 @@ std::string trim(const std::string& s);
 
 std::vector<std::pair<std::string, float>> parse_prompt_attention(const std::string& text);
 
+#ifdef SD_EXAMPLES_GLOVE_GUI
+#define GLOVE_ENABLE_JSON
+#include "glove.h"
+#endif
+
 #define LOG_DEBUG(format, ...) log_printf(SD_LOG_DEBUG, __FILE__, __LINE__, format, ##__VA_ARGS__)
 #define LOG_INFO(format, ...) log_printf(SD_LOG_INFO, __FILE__, __LINE__, format, ##__VA_ARGS__)
+#ifndef SD_EXAMPLES_GLOVE_GUI
 #define LOG_WARN(format, ...) log_printf(SD_LOG_WARN, __FILE__, __LINE__, format, ##__VA_ARGS__)
+#else
+#define LOG_WARN(format, ...) GlvApp::show(SlvStatus(SlvStatus::statusType::warning, format, ##__VA_ARGS__), true);
+#endif
+#ifndef SD_EXAMPLES_GLOVE_GUI
 #define LOG_ERROR(format, ...) log_printf(SD_LOG_ERROR, __FILE__, __LINE__, format, ##__VA_ARGS__)
+#else
+#define LOG_ERROR(format, ...) GlvApp::show(SlvStatus(SlvStatus::statusType::critical, format, ##__VA_ARGS__), true);
+#endif
 #endif  // __UTIL_H__

@@ -4,6 +4,10 @@
 #include "ggml_extend.hpp"
 #include "gits_noise.inl"
 
+#ifdef SD_EXAMPLES_GLOVE_GUI
+#include "glove.h"
+#endif
+
 /*================================================= CompVisDenoiser ==================================================*/
 
 // Ref: https://github.com/crowsonkb/k-diffusion/blob/master/k_diffusion/external.py
@@ -482,7 +486,9 @@ static void sample_k_diffusion(sample_method_t method,
             struct ggml_tensor* noise = ggml_dup_tensor(work_ctx, x);
             struct ggml_tensor* d     = ggml_dup_tensor(work_ctx, x);
 
-            for (int i = 0; i < steps; i++) {
+            SlvProgressionQt& p = *GlvApp::get_progression("Generating image");
+            for (p = 0; p << steps; p++) {
+                int i = p;
                 float sigma = sigmas[i];
 
                 // denoise
@@ -535,7 +541,9 @@ static void sample_k_diffusion(sample_method_t method,
         {
             struct ggml_tensor* d = ggml_dup_tensor(work_ctx, x);
 
-            for (int i = 0; i < steps; i++) {
+            SlvProgressionQt& p = *GlvApp::get_progression("Generating image");
+            for (p = 0; p << steps; p++) {
+                int i = p;
                 float sigma = sigmas[i];
 
                 // denoise
@@ -568,7 +576,9 @@ static void sample_k_diffusion(sample_method_t method,
             struct ggml_tensor* d  = ggml_dup_tensor(work_ctx, x);
             struct ggml_tensor* x2 = ggml_dup_tensor(work_ctx, x);
 
-            for (int i = 0; i < steps; i++) {
+            SlvProgressionQt& p = *GlvApp::get_progression("Generating image");
+            for (p = 0; p << steps; p++) {
+                int i = p;
                 // denoise
                 ggml_tensor* denoised = model(x, sigmas[i], -(i + 1));
 
@@ -618,7 +628,9 @@ static void sample_k_diffusion(sample_method_t method,
             struct ggml_tensor* d  = ggml_dup_tensor(work_ctx, x);
             struct ggml_tensor* x2 = ggml_dup_tensor(work_ctx, x);
 
-            for (int i = 0; i < steps; i++) {
+            SlvProgressionQt& p = *GlvApp::get_progression("Generating image");
+            for (p = 0; p << steps; p++) {
+                int i = p;
                 // denoise
                 ggml_tensor* denoised = model(x, sigmas[i], i + 1);
 
@@ -671,7 +683,9 @@ static void sample_k_diffusion(sample_method_t method,
             struct ggml_tensor* d     = ggml_dup_tensor(work_ctx, x);
             struct ggml_tensor* x2    = ggml_dup_tensor(work_ctx, x);
 
-            for (int i = 0; i < steps; i++) {
+            SlvProgressionQt& p = *GlvApp::get_progression("Generating image");
+            for (p = 0; p << steps; p++) {
+                int i = p;
                 // denoise
                 ggml_tensor* denoised = model(x, sigmas[i], i + 1);
 
@@ -745,7 +759,9 @@ static void sample_k_diffusion(sample_method_t method,
 
             auto t_fn = [](float sigma) -> float { return -log(sigma); };
 
-            for (int i = 0; i < steps; i++) {
+            SlvProgressionQt& p = *GlvApp::get_progression("Generating image");
+            for (p = 0; p << steps; p++) {
+                int i = p;
                 // denoise
                 ggml_tensor* denoised = model(x, sigmas[i], i + 1);
 
@@ -784,7 +800,9 @@ static void sample_k_diffusion(sample_method_t method,
 
             auto t_fn = [](float sigma) -> float { return -log(sigma); };
 
-            for (int i = 0; i < steps; i++) {
+            SlvProgressionQt& p = *GlvApp::get_progression("Generating image");
+            for (p = 0; p << steps; p++) {
+                int i = p;
                 // denoise
                 ggml_tensor* denoised = model(x, sigmas[i], i + 1);
 
@@ -827,7 +845,9 @@ static void sample_k_diffusion(sample_method_t method,
             ggml_tensor* x_next = x;
             std::vector<ggml_tensor*> buffer_model;
 
-            for (int i = 0; i < steps; i++) {
+            SlvProgressionQt& p = *GlvApp::get_progression("Generating image");
+            for (p = 0; p << steps; p++) {
+                int i = p;
                 float sigma = sigmas[i];
                 float sigma_next = sigmas[i + 1];
 
@@ -905,7 +925,9 @@ static void sample_k_diffusion(sample_method_t method,
             std::vector<ggml_tensor*> buffer_model;
             ggml_tensor* x_next = x;
 
-            for (int i = 0; i < steps; i++) {
+            SlvProgressionQt& p = *GlvApp::get_progression("Generating image");
+            for (p = 0; p << steps; p++) {
+                int i = p;
                 float sigma = sigmas[i];
                 float t_next = sigmas[i + 1];
 
@@ -978,7 +1000,9 @@ static void sample_k_diffusion(sample_method_t method,
             struct ggml_tensor* noise = ggml_dup_tensor(work_ctx, x);
             struct ggml_tensor* d     = ggml_dup_tensor(work_ctx, x);
 
-            for (int i = 0; i < steps; i++) {
+            SlvProgressionQt& p = *GlvApp::get_progression("Generating image");
+            for (p = 0; p << steps; p++) {
+                int i = p;
                 float sigma = sigmas[i];
 
                 // denoise

@@ -33,7 +33,8 @@ option(SD_FLASH_ATTN                 "sd: use flash attention for x4 less memory
 option(SD_FAST_SOFTMAX               "sd: x1.5 faster softmax, indeterministic (sometimes, same seed don't generate same image), cuda only" OFF)
 option(SD_BUILD_SHARED_LIBS          "sd: build shared libs" OFF)
 #option(SD_BUILD_SERVER               "sd: build server example"                           ON)
-option(SD_EXAMPLES_GLOVE_GUI         "sd: use glove gui in examples" OFF)
+option(SD_EXAMPLES_GLOVE_GUI         "sd: use glove gui for examples" OFF)
+option(SD_EXAMPLES_GLOVE_GUI_DESKTOP "sd: if SD_EXAMPLES_GLOVE_GUI, gui is configured as autonomous desktop application" ON)
 set(QT_VERSION "6" CACHE STRING "Qt version")
 set_property(CACHE QT_VERSION PROPERTY STRINGS 5 6)
 
@@ -77,11 +78,20 @@ file(GLOB SD_LIB_SOURCES
     "*.hpp"
 )
 
+if(SD_BUILD_EXAMPLES AND SD_EXAMPLES_GLOVE_GUI)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_AUTOMOC ON)
+find_package(Qt${QT_VERSION} COMPONENTS Widgets REQUIRED)
+endif()
+
 # we can get only one share lib
 if(SD_BUILD_SHARED_LIBS)
     message("-- Build shared library")
     message(${SD_LIB_SOURCES})
     set(BUILD_SHARED_LIBS OFF)
+if(SD_EXAMPLES_GLOVE_GUI)
+    set(SD_LIB_SOURCES ${SD_LIB_SOURCES} ${CMAKE_SOURCE_DIR}/thirdparty/glove.h)
+endif()
     add_library(${SD_LIB} SHARED ${SD_LIB_SOURCES})
     add_definitions(-DSD_BUILD_SHARED_LIB)
     target_compile_definitions(${SD_LIB} PRIVATE -DSD_BUILD_DLL)
@@ -90,6 +100,12 @@ else()
     message("-- Build static library")
     set(BUILD_SHARED_LIBS OFF)
     add_library(${SD_LIB} STATIC ${SD_LIB_SOURCES})
+endif()
+
+if(SD_EXAMPLES_GLOVE_GUI)
+    target_link_libraries(${SD_LIB} PRIVATE Qt${QT_VERSION}::Widgets)
+    target_compile_definitions(${SD_LIB} PUBLIC -D SD_EXAMPLES_GLOVE_GUI)
+    qt_disable_unicode_defines(stable-diffusion)
 endif()
 
 if(SD_SYCL)
@@ -105,12 +121,6 @@ if(SD_SYCL)
     endif()
     message("-- Turn off fast-math for host in SYCL backend")
     target_compile_options(${SD_LIB} PRIVATE ${SYCL_COMPILE_OPTIONS})
-endif()
-
-if(SD_BUILD_EXAMPLES AND SD_EXAMPLES_GLOVE_GUI)
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(CMAKE_AUTOMOC ON)
-find_package(Qt${QT_VERSION} COMPONENTS Widgets REQUIRED)
 endif()
 
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
