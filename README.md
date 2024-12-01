@@ -13,6 +13,8 @@ This repository is a fork of [stable-diffusion.cpp](https://github.com/leejet/st
   ```cmake
   -DSD_BUILD_EXAMPLES=ON -DSD_EXAMPLES_GLOVE_GUI=ON
   ```
+  
+- Comes with precompiled binaries for Windows requiring no further installation. Compatible with Nvidia graphic card GeForce GTX 950 and after (ie: RTX series are compatible).
 
 ## Features
 
