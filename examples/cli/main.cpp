@@ -779,7 +779,32 @@ void sd_log_cb(enum sd_log_level_t level, const char* log, void* data) {
 #ifdef SD_EXAMPLES_GLOVE_GUI_DESKTOP
 #pragma GLOVE_APP_MSVC_NO_CONSOLE
 #endif
+struct RecurrentStruct {
+    sd_ctx_t* sd_ctx = NULL;
+    GlvSDParams params;
+    bool model_updated(const GlvSDParams& _params) {
+        bool l_model_upddated = _params.get_model() != params.get_model();
+        l_model_upddated |= _params.get_diffusion_model() != params.get_diffusion_model();
+        l_model_upddated |= _params.get_model_addons() != params.get_model_addons();
+        l_model_upddated |= _params.get_advanced_params().get_taesd() != params.get_advanced_params().get_taesd();
+        l_model_upddated |= _params.get_advanced_params().get_control_net() != params.get_advanced_params().get_control_net();
+        l_model_upddated |= _params.get_advanced_params().get_embd_dir() != params.get_advanced_params().get_embd_dir();
+        l_model_upddated |= _params.get_photomaker_params().get_stacked_id_embd_dir() != params.get_photomaker_params().get_stacked_id_embd_dir();
+        l_model_upddated |= _params.get_advanced_params().get_vae_tiling() != params.get_advanced_params().get_vae_tiling();
+        l_model_upddated |= _params.get_advanced_params().get_threads() != params.get_advanced_params().get_threads();
+        l_model_upddated |= _params.get_advanced_params().get_type() != params.get_advanced_params().get_type();
+        l_model_upddated |= _params.get_rng() != params.get_rng();
+        l_model_upddated |= _params.get_advanced_params().get_schedule() != params.get_advanced_params().get_schedule();
+        l_model_upddated |= _params.get_advanced_params().get_clip_on_cpu() != params.get_advanced_params().get_clip_on_cpu();
+        l_model_upddated |= _params.get_advanced_params().get_control_net_cpu() != params.get_advanced_params().get_control_net_cpu();
+        l_model_upddated |= _params.get_advanced_params().get_vae_on_cpu() != params.get_advanced_params().get_vae_on_cpu();
+        l_model_upddated |= _params.get_advanced_params().get_diffusion_fa() != params.get_advanced_params().get_diffusion_fa();
+        return l_model_upddated;
+    }
+};
 #endif
+
+
 
 int main(int argc, char* argv[]) {
 
@@ -797,10 +822,14 @@ int main(int argc, char* argv[]) {
     GlvApp::get_progression("Result");
 
 #ifdef SD_EXAMPLES_GLOVE_GUI_DESKTOP
-    GLOVE_APP_PARAM_AUTO(GlvSDParams);
-#else
-    GLOVE_APP_PARAM(GlvSDParams);
+#define GLOVE_APP_AUTO true
 #endif
+#define GLOVE_APP_RECURRENT_MODE true
+#define GLOVE_APP_RECURRENT_TYPE RecurrentStruct
+    RecurrentStruct glove_recurrent_var;
+
+    GLOVE_APP_PARAM(GlvSDParams);
+
 #endif
 
     SDParams params;
@@ -893,31 +922,53 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    sd_ctx_t* sd_ctx = new_sd_ctx(params.model_path.c_str(),
-                                  params.clip_l_path.c_str(),
-                                  params.clip_g_path.c_str(),
-                                  params.t5xxl_path.c_str(),
-                                  params.diffusion_model_path.c_str(),
-                                  params.vae_path.c_str(),
-                                  params.taesd_path.c_str(),
-                                  params.controlnet_path.c_str(),
-                                  params.lora_model_dir.c_str(),
-                                  params.embeddings_path.c_str(),
-                                  params.stacked_id_embeddings_path.c_str(),
-                                  vae_decode_only,
-                                  params.vae_tiling,
-                                  true,
-                                  params.n_threads,
-                                  params.wtype,
-                                  params.rng_type,
-                                  params.schedule,
-                                  params.clip_on_cpu,
-                                  params.control_net_cpu,
-                                  params.vae_on_cpu,
-                                  params.diffusion_flash_attn);
+    sd_ctx_t* sd_ctx;
+#ifdef SD_EXAMPLES_GLOVE_GUI
+    if (!is_glove_recurrent || !glove_recurrent_var.sd_ctx || glove_recurrent_var.model_updated(glove_parametrization)) {
+        if (glove_recurrent_var.sd_ctx) {
+            free_sd_ctx(glove_recurrent_var.sd_ctx);
+        }
+#endif
+        sd_ctx = new_sd_ctx(params.model_path.c_str(),
+                                      params.clip_l_path.c_str(),
+                                      params.clip_g_path.c_str(),
+                                      params.t5xxl_path.c_str(),
+                                      params.diffusion_model_path.c_str(),
+                                      params.vae_path.c_str(),
+                                      params.taesd_path.c_str(),
+                                      params.controlnet_path.c_str(),
+                                      params.lora_model_dir.c_str(),
+                                      params.embeddings_path.c_str(),
+                                      params.stacked_id_embeddings_path.c_str(),
+                                      vae_decode_only,
+                                      params.vae_tiling,
+#ifdef SD_EXAMPLES_GLOVE_GUI
+                                      !is_glove_recurrent,
+#else
+                                      true,
+#endif
+                                      params.n_threads,
+                                      params.wtype,
+                                      params.rng_type,
+                                      params.schedule,
+                                      params.clip_on_cpu,
+                                      params.control_net_cpu,
+                                      params.vae_on_cpu,
+                                      params.diffusion_flash_attn);
+#ifdef SD_EXAMPLES_GLOVE_GUI
+        if (is_glove_recurrent) {
+            glove_recurrent_var.sd_ctx = sd_ctx;
+        }
+    } else {
+        sd_ctx = glove_recurrent_var.sd_ctx;
+    }
+#endif
 
     if (sd_ctx == NULL) {
         printf("new_sd_ctx_t failed\n");
+#ifdef SD_EXAMPLES_GLOVE_GUI
+        GlvApp::show(SlvStatus(SlvStatus::statusType::warning, "new_sd_ctx_t failed"), true);
+#endif
         return 1;
     }
 
@@ -992,7 +1043,12 @@ int main(int argc, char* argv[]) {
                               params.seed);
             if (results == NULL) {
                 printf("generate failed\n");
-                free_sd_ctx(sd_ctx);
+#ifdef SD_EXAMPLES_GLOVE_GUI
+                GlvApp::show(SlvStatus(SlvStatus::statusType::warning, "generate failed"), true);
+                if (!is_glove_recurrent)
+#endif
+                    free_sd_ctx(sd_ctx);
+
                 return 1;
             }
             size_t last            = params.output_path.find_last_of(".");
@@ -1009,7 +1065,10 @@ int main(int argc, char* argv[]) {
                 results[i].data = NULL;
             }
             free(results);
-            free_sd_ctx(sd_ctx);
+#ifdef SD_EXAMPLES_GLOVE_GUI
+            if (!is_glove_recurrent)
+#endif
+                free_sd_ctx(sd_ctx);
             return 0;
         } else {
             results = img2img(sd_ctx,
@@ -1041,7 +1100,12 @@ int main(int argc, char* argv[]) {
 
     if (results == NULL) {
         printf("generate failed\n");
-        free_sd_ctx(sd_ctx);
+#ifdef SD_EXAMPLES_GLOVE_GUI
+        GlvApp::show(SlvStatus(SlvStatus::statusType::warning, "generate failed"), true);
+        if (!is_glove_recurrent)
+#endif
+            free_sd_ctx(sd_ctx);
+
         return 1;
     }
 
@@ -1074,10 +1138,14 @@ int main(int argc, char* argv[]) {
 
     size_t last            = params.output_path.find_last_of(".");
     std::string dummy_name = last != std::string::npos ? params.output_path.substr(0, last) : params.output_path;
+#ifdef SD_EXAMPLES_GLOVE_GUI
     GlvApp::get_progression("Result")->set_message("Saving images");
     SlvProgressionQt& p = *GlvApp::get_progression("Result");
     for (p = 0; p << params.batch_count; p++) {
         int i = p;
+#else
+    for (int i = 0; i < params.batch_count; i++) {
+#endif
         if (results[i].data == NULL) {
             continue;
         }
@@ -1089,9 +1157,16 @@ int main(int argc, char* argv[]) {
         results[i].data = NULL;
     }
     free(results);
-    free_sd_ctx(sd_ctx);
+#ifdef SD_EXAMPLES_GLOVE_GUI
+    if (!is_glove_recurrent)
+#endif
+        free_sd_ctx(sd_ctx);
     free(control_image_buffer);
     free(input_image_buffer);
+
+#ifdef SD_EXAMPLES_GLOVE_GUI
+    glove_recurrent_var.params = glove_parametrization;
+#endif
 
     return 0;
 }

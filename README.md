@@ -13,10 +13,14 @@ This repository is a fork of [stable-diffusion.cpp](https://github.com/leejet/st
   ```cmake
   -DSD_BUILD_EXAMPLES=ON -DSD_EXAMPLES_GLOVE_GUI=ON
   ```
-  
+
 - Comes with precompiled binaries for Windows requiring no further installation. Compatible with Nvidia graphic card GeForce GTX 950 and after (ie: RTX series are compatible).
 
 ## Features
+
+- The model is reloaded only if its parameters are changed
+  
+  - Possibility to generate images with different prompts on the fly
 
 - Parameters saving as *json*, upon acceptance (*Ok* button):
   
@@ -29,9 +33,9 @@ This repository is a fork of [stable-diffusion.cpp](https://github.com/leejet/st
   - Parameters can be loaded
     - by using the *Load* button
     - or: <code>sd -glove 'path-to-parameters-file'</code>
-	
-- Progress :
 
+- Progress :
+  
   - Monitoring of progression
   - Possibility to cancel
 
@@ -40,21 +44,24 @@ This repository is a fork of [stable-diffusion.cpp](https://github.com/leejet/st
 </p>
 
 - Warning/error messages display
-	
+
 ## Misc
 
 - By default, the setup is configured for a desktop application (i.e. : launch using executable icon on desktop).
   One can disable this default behaviour by additionaly setting the following CMake command:
+  
   ```cmake
   -DSD_EXAMPLES_GLOVE_GUI_DESKTOP=OFF
   ```
+  
   In this case, the GUI will be accessible using the following CLI argument:
+  
   ```sh
   sd -glove
   ```
+  
   and the terminal will be visible.
   In both cases, CLI arguments of SD examples remain operational.
-  
 
 - On Windows, if DLLs are missing, go to the <code>sd</code> executable directory and apply the command:
   

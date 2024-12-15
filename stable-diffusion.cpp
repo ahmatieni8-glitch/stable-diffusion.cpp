@@ -193,8 +193,10 @@ public:
         vae_tiling = vae_tiling_;
 
         if (model_path.size() > 0) {
+#ifdef SD_EXAMPLES_GLOVE_GUI
             GlvApp::get_progression("Model")->set_message("Loading " + SlvFile(model_path).get_file_name().get_total_name());
             GlvApp::get_progression("Model")->start();
+#endif
             LOG_INFO("loading model from '%s'", model_path.c_str());
             if (!model_loader.init_from_file(model_path)) {
                 LOG_ERROR("init model loader from file failed: '%s'", model_path.c_str());
@@ -202,8 +204,10 @@ public:
         }
 
         if (clip_l_path.size() > 0) {
+#ifdef SD_EXAMPLES_GLOVE_GUI
             GlvApp::get_progression("clip_l")->set_message("Loading " + SlvFile(clip_l_path).get_file_name().get_total_name());
             GlvApp::get_progression("clip_l")->start();
+#endif
             LOG_INFO("loading clip_l from '%s'", clip_l_path.c_str());
             if (!model_loader.init_from_file(clip_l_path, "text_encoders.clip_l.transformer.")) {
                 LOG_WARN("loading clip_l from '%s' failed", clip_l_path.c_str());
@@ -211,8 +215,10 @@ public:
         }
 
         if (clip_g_path.size() > 0) {
+#ifdef SD_EXAMPLES_GLOVE_GUI
             GlvApp::get_progression("clip_g")->set_message("Loading " + SlvFile(clip_g_path).get_file_name().get_total_name());
             GlvApp::get_progression("clip_g")->start();
+#endif
             LOG_INFO("loading clip_g from '%s'", clip_g_path.c_str());
             if (!model_loader.init_from_file(clip_g_path, "text_encoders.clip_g.transformer.")) {
                 LOG_WARN("loading clip_g from '%s' failed", clip_g_path.c_str());
@@ -220,8 +226,10 @@ public:
         }
 
         if (t5xxl_path.size() > 0) {
+#ifdef SD_EXAMPLES_GLOVE_GUI
             GlvApp::get_progression("t5xxl")->set_message("Loading " + SlvFile(t5xxl_path).get_file_name().get_total_name());
             GlvApp::get_progression("t5xxl")->start();
+#endif
             LOG_INFO("loading t5xxl from '%s'", t5xxl_path.c_str());
             if (!model_loader.init_from_file(t5xxl_path, "text_encoders.t5xxl.transformer.")) {
                 LOG_WARN("loading t5xxl from '%s' failed", t5xxl_path.c_str());
@@ -229,8 +237,10 @@ public:
         }
 
         if (diffusion_model_path.size() > 0) {
+#ifdef SD_EXAMPLES_GLOVE_GUI
             GlvApp::get_progression("diffusion-model")->set_message("Loading " + SlvFile(diffusion_model_path).get_file_name().get_total_name());
             GlvApp::get_progression("diffusion-model")->start();
+#endif
             LOG_INFO("loading diffusion model from '%s'", diffusion_model_path.c_str());
             if (!model_loader.init_from_file(diffusion_model_path, "model.diffusion_model.")) {
                 LOG_WARN("loading diffusion model from '%s' failed", diffusion_model_path.c_str());
@@ -238,8 +248,10 @@ public:
         }
 
         if (vae_path.size() > 0) {
+#ifdef SD_EXAMPLES_GLOVE_GUI
             GlvApp::get_progression("VAE")->set_message("Loading " + SlvFile(vae_path).get_file_name().get_total_name());
             GlvApp::get_progression("VAE")->start();
+#endif
             LOG_INFO("loading vae from '%s'", vae_path.c_str());
             if (!model_loader.init_from_file(vae_path, "vae.")) {
                 LOG_WARN("loading vae from '%s' failed", vae_path.c_str());
@@ -531,12 +543,14 @@ public:
 
         int64_t t1 = ggml_time_ms();
         LOG_INFO("loading model from '%s' completed, taking %.2fs", model_path.c_str(), (t1 - t0) * 1.0f / 1000);
+#ifdef SD_EXAMPLES_GLOVE_GUI
         GlvApp::get_progression("Model")->end();
         GlvApp::get_progression("clip_l")->end();
         GlvApp::get_progression("clip_g")->end();
         GlvApp::get_progression("t5xxl")->end();
         GlvApp::get_progression("diffusion-model")->end();
         GlvApp::get_progression("VAE")->end();
+#endif
 
         // check is_using_v_parameterization_for_sd2
         bool is_using_v_parameterization = false;
@@ -693,8 +707,10 @@ public:
             }
         }
 
+#ifdef SD_EXAMPLES_GLOVE_GUI
         GlvApp::get_progression("LoRA")->set_message("Attempting to apply " + std::to_string(lora_state.size()) + " LoRAs");
         GlvApp::get_progression("LoRA")->start();
+#endif
         LOG_INFO("Attempting to apply %lu LoRAs", lora_state.size());
 
         for (auto& kv : lora_state_diff) {
@@ -1222,7 +1238,9 @@ sd_image_t* generate_image(sd_ctx_t* sd_ctx,
     sd_ctx->sd->apply_loras(lora_f2m);
     int64_t t1 = ggml_time_ms();
     LOG_INFO("apply_loras completed, taking %.2fs", (t1 - t0) * 1.0f / 1000);
+#ifdef SD_EXAMPLES_GLOVE_GUI
     GlvApp::get_progression("LoRA")->end();
+#endif
 
     // Photo Maker
     std::string prompt_text_only;
@@ -1379,8 +1397,12 @@ sd_image_t* generate_image(sd_ctx_t* sd_ctx,
     int W = width / 8;
     int H = height / 8;
     LOG_INFO("sampling using %s method", sampling_methods_str[sample_method]);
+#ifdef SD_EXAMPLES_GLOVE_GUI
     SlvProgressionQt& b = *GlvApp::get_progression("Batch");
     for (b = 0; b << batch_count; b++) {
+#else
+    for (int b = 0; b < batch_count; b++) {
+#endif
         int64_t sampling_start = ggml_time_ms();
         int64_t cur_seed       = seed + b;
         LOG_INFO("generating image: %i/%i - seed %" PRId64, b + 1, batch_count, cur_seed);
@@ -1423,7 +1445,9 @@ sd_image_t* generate_image(sd_ctx_t* sd_ctx,
         final_latents.push_back(x_0);
     }
 
-    GlvApp::get_progression("Generating image")->finish();
+#ifdef SD_EXAMPLES_GLOVE_GUI
+    GlvApp::get_progression("Generating image")->finish(false);
+#endif
 
     if (sd_ctx->sd->free_params_immediately) {
         sd_ctx->sd->diffusion_model->free_params_buffer();
@@ -1434,10 +1458,14 @@ sd_image_t* generate_image(sd_ctx_t* sd_ctx,
     // Decode to image
     LOG_INFO("decoding %zu latents", final_latents.size());
     std::vector<struct ggml_tensor*> decoded_images;  // collect decoded images
+#ifdef SD_EXAMPLES_GLOVE_GUI
     GlvApp::get_progression("Decoding")->set_message("Processing");
     SlvProgressionQt& p = *GlvApp::get_progression("Decoding");
     for (p = 0; p << final_latents.size(); p++) {
         size_t i = p;
+#else
+    for (size_t i = 0; i < final_latents.size(); i++) {
+#endif
         t1                      = ggml_time_ms();
         struct ggml_tensor* img = sd_ctx->sd->decode_first_stage(work_ctx, final_latents[i] /* x_0 */);
         // print_ggml_tensor(img);
