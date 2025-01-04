@@ -27,7 +27,7 @@
 
 #include "model.h"
 
-#ifdef SD_USE_CUBLAS
+#ifdef SD_USE_CUDA
 #include "ggml-cuda.h"
 #endif
 
@@ -284,6 +284,42 @@ __STATIC_INLINE__ void sd_image_to_tensor(const uint8_t* image_data,
                 if (scale) {
                     value /= 255.f;
                 }
+                ggml_tensor_set_f32(output, value, ix, iy, k);
+            }
+        }
+    }
+}
+
+__STATIC_INLINE__ void sd_mask_to_tensor(const uint8_t* image_data,
+                                         struct ggml_tensor* output,
+                                         bool scale = true) {
+    int64_t width    = output->ne[0];
+    int64_t height   = output->ne[1];
+    int64_t channels = output->ne[2];
+    GGML_ASSERT(channels == 1 && output->type == GGML_TYPE_F32);
+    for (int iy = 0; iy < height; iy++) {
+        for (int ix = 0; ix < width; ix++) {
+            float value = *(image_data + iy * width * channels + ix);
+            if (scale) {
+                value /= 255.f;
+            }
+            ggml_tensor_set_f32(output, value, ix, iy);
+        }
+    }
+}
+
+__STATIC_INLINE__ void sd_apply_mask(struct ggml_tensor* image_data,
+                                     struct ggml_tensor* mask,
+                                     struct ggml_tensor* output) {
+    int64_t width    = output->ne[0];
+    int64_t height   = output->ne[1];
+    int64_t channels = output->ne[2];
+    GGML_ASSERT(output->type == GGML_TYPE_F32);
+    for (int ix = 0; ix < width; ix++) {
+        for (int iy = 0; iy < height; iy++) {
+            float m = ggml_tensor_get_f32(mask, ix, iy);
+            for (int k = 0; k < channels; k++) {
+                float value = ((float)(m < 254.5/255)) * (ggml_tensor_get_f32(image_data, ix, iy, k) - .5) + .5;
                 ggml_tensor_set_f32(output, value, ix, iy, k);
             }
         }
@@ -672,7 +708,7 @@ __STATIC_INLINE__ struct ggml_tensor* ggml_nn_attention(struct ggml_context* ctx
                                                         struct ggml_tensor* k,
                                                         struct ggml_tensor* v,
                                                         bool mask = false) {
-#if defined(SD_USE_FLASH_ATTENTION) && !defined(SD_USE_CUBLAS) && !defined(SD_USE_METAL) && !defined(SD_USE_VULKAN) && !defined(SD_USE_SYCL)
+#if defined(SD_USE_FLASH_ATTENTION) && !defined(SD_USE_CUDA) && !defined(SD_USE_METAL) && !defined(SD_USE_VULKAN) && !defined(SD_USE_SYCL)
     struct ggml_tensor* kqv = ggml_flash_attn(ctx, q, k, v, false);  // [N * n_head, n_token, d_head]
 #else
     float d_head           = (float)q->ne[0];
@@ -828,7 +864,7 @@ __STATIC_INLINE__ struct ggml_tensor* ggml_nn_group_norm(struct ggml_context* ct
 }
 
 __STATIC_INLINE__ void ggml_backend_tensor_get_and_sync(ggml_backend_t backend, const struct ggml_tensor* tensor, void* data, size_t offset, size_t size) {
-#if defined(SD_USE_CUBLAS) || defined(SD_USE_SYCL)
+#if defined(SD_USE_CUDA) || defined(SD_USE_SYCL)
     if (!ggml_backend_is_cpu(backend)) {
         ggml_backend_tensor_get_async(backend, tensor, data, offset, size);
         ggml_backend_synchronize(backend);
@@ -1138,13 +1174,7 @@ public:
             ggml_backend_cpu_set_n_threads(backend, n_threads);
         }
 
-#ifdef SD_USE_METAL
-        if (ggml_backend_is_metal(backend)) {
-            ggml_backend_metal_set_n_cb(backend, n_threads);
-        }
-#endif
         ggml_backend_graph_compute(backend, gf);
-
 #ifdef GGML_PERF
         ggml_graph_print(gf);
 #endif
