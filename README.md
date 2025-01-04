@@ -14,7 +14,11 @@ This repository is a fork of [stable-diffusion.cpp](https://github.com/leejet/st
   -DSD_BUILD_EXAMPLES=ON -DSD_EXAMPLES_GLOVE_GUI=ON
   ```
 
-- Comes with precompiled binaries for Windows requiring no further installation. Compatible with Nvidia graphic card GeForce GTX 950 and after (ie: RTX series are compatible).
+- Comes with precompiled binaries ready to use for Windows requiring no further installation. 
+  
+  - **-bin-win-avx2-x64** : Compatible with (most) x64 CPU
+  
+  - **-bin-win-cuda12-x64** : Compatible with Nvidia graphic card GeForce GTX 950 and after (ie: RTX series are compatible).
 
 ## Features
 
