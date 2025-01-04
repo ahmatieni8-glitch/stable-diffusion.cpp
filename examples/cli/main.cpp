@@ -880,6 +880,10 @@ int main(int argc, char* argv[]) {
     uint8_t* control_image_buffer = NULL;
     uint8_t* mask_image_buffer    = NULL;
 
+    if (is_glove_recurrent) {
+        vae_decode_only = false;
+    }
+
     if (params.mode == IMG2IMG || params.mode == IMG2VID) {
         vae_decode_only = false;
 
