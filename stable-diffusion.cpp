@@ -562,6 +562,10 @@ public:
             if (is_using_v_parameterization_for_sd2(ctx, sd_version_is_inpaint(version))) {
                 is_using_v_parameterization = true;
             }
+        } else if (sd_version_is_sdxl(version)) {
+            if (model_loader.tensor_storages_types.find("v_pred") != model_loader.tensor_storages_types.end()) {
+                is_using_v_parameterization = true;
+            }
         } else if (version == VERSION_SVD) {
             // TODO: V_PREDICTION_EDM
             is_using_v_parameterization = true;
@@ -643,7 +647,9 @@ public:
         ggml_set_f32(timesteps, 999);
 
         struct ggml_tensor* concat = is_inpaint ? ggml_new_tensor_4d(work_ctx, GGML_TYPE_F32, 8, 8, 5, 1) : NULL;
-        ggml_set_f32(concat, 0);
+        if (concat != NULL) {
+            ggml_set_f32(concat, 0);
+        }
 
         int64_t t0              = ggml_time_ms();
         struct ggml_tensor* out = ggml_dup_tensor(work_ctx, x_t);
