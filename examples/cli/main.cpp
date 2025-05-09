@@ -815,7 +815,7 @@ struct RecurrentStruct {
         l_model_upddated |= _params.get_advanced_params().get_vae_tiling() != params.get_advanced_params().get_vae_tiling();
         l_model_upddated |= _params.get_advanced_params().get_threads() != params.get_advanced_params().get_threads();
         l_model_upddated |= _params.get_advanced_params().get_type() != params.get_advanced_params().get_type();
-        l_model_upddated |= _params.get_rng() != params.get_rng();
+        l_model_upddated |= _params.get_advanced_params().get_rng() != params.get_advanced_params().get_rng();
         l_model_upddated |= _params.get_advanced_params().get_schedule() != params.get_advanced_params().get_schedule();
         l_model_upddated |= _params.get_advanced_params().get_clip_on_cpu() != params.get_advanced_params().get_clip_on_cpu();
         l_model_upddated |= _params.get_advanced_params().get_control_net_cpu() != params.get_advanced_params().get_control_net_cpu();
