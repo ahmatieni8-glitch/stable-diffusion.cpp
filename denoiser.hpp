@@ -1106,7 +1106,13 @@ static void sample_k_diffusion(sample_method_t method,
             struct ggml_tensor* variance_noise =
                 ggml_dup_tensor(work_ctx, x);
 
+#ifdef SD_EXAMPLES_GLOVE_GUI
+            SlvProgressionQt& p = *GlvApp::get_progression("Generating image");
+            for (p = 0; p << steps; p++) {
+                int i = p;
+#else
             for (int i = 0; i < steps; i++) {
+#endif
                 // The "trailing" DDIM timestep, see S. Lin et al.,
                 // "Common Diffusion Noise Schedules and Sample Steps
                 // are Flawed", arXiv:2305.08891 [cs], p. 4, Table
@@ -1296,7 +1302,13 @@ static void sample_k_diffusion(sample_method_t method,
             struct ggml_tensor* noise =
                 ggml_dup_tensor(work_ctx, x);
 
+#ifdef SD_EXAMPLES_GLOVE_GUI
+            SlvProgressionQt& p = *GlvApp::get_progression("Generating image");
+            for (p = 0; p << steps; p++) {
+                int i = p;
+#else
             for (int i = 0; i < steps; i++) {
+#endif
                 // Analytic form for TCD timesteps
                 int timestep = TIMESTEPS - 1 -
                     (TIMESTEPS / original_steps) *
