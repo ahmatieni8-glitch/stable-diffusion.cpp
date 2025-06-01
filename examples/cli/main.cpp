@@ -1252,7 +1252,6 @@ int main(int argc, char* argv[]) {
                 printf("save result PNG image to '%s'\n", final_image_path2.c_str());
             }
 
-            // Caution : memory leak here
             sd_image_t* result_cropped = crop(results[i], glove_parametrization.get_images_sequence_params().get_crop().left, glove_parametrization.get_images_sequence_params().get_crop().right, glove_parametrization.get_images_sequence_params().get_crop().up, glove_parametrization.get_images_sequence_params().get_crop().bottom);
             results[i] = *result_cropped;
             delete result_cropped;
