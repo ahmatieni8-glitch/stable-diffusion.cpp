@@ -3,7 +3,7 @@
 This repository is a fork of [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp). It adds a GUI interface to the executable generating examples. It will be updated according to the master repository developments (evolution of the parameters).
 
 <p align="center">
-  <img src="./assets/sd-example.png" width="360x">
+  <img src="./assets/sd-example.png" width="380x">
 </p>
 
 - Only requires installation of Qt (5 or 6)
@@ -48,6 +48,8 @@ This repository is a fork of [stable-diffusion.cpp](https://github.com/leejet/st
 </p>
 
 - Warning/error messages display
+
+- Possibility to generate images sequences using **img2img** mode and by setting the output image to be the same as the input image. See **Images sequence** parameters.
 
 ## Misc
 

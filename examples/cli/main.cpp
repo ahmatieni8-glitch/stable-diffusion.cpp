@@ -823,6 +823,19 @@ struct RecurrentStruct {
         l_model_upddated |= _params.get_advanced_params().get_diffusion_fa() != params.get_advanced_params().get_diffusion_fa();
         return l_model_upddated;
     }
+    unsigned int count = 0;
+#ifdef SD_EXAMPLES_IMG2IMG_REPEAT
+    bool l_img2img_sequence = false;
+    unsigned int Nframes = 100000;
+    // Auto repeat if returns true
+    operator bool() const {
+        return l_img2img_sequence && count > 0 && count <= Nframes;
+    }
+#else
+    operator bool() const {
+        return false;
+    }
+#endif
 };
 #endif
 
@@ -848,9 +861,18 @@ int main(int argc, char* argv[]) {
 #endif
 #define GLOVE_APP_RECURRENT_MODE true
 #define GLOVE_APP_RECURRENT_TYPE RecurrentStruct
-    RecurrentStruct glove_recurrent_var;
 
+    RecurrentStruct glove_recurrent_var;
     GLOVE_APP_PARAM(GlvSDParams);
+
+#ifdef SD_EXAMPLES_IMG2IMG_REPEAT
+    if (glove_parametrization.get_init_img().is_equivalent(glove_parametrization.get_output())) {
+        if (!glove_recurrent_var.l_img2img_sequence) {
+            glove_recurrent_var.count = 0;
+        }
+        glove_recurrent_var.l_img2img_sequence = true;
+    }
+#endif
 
 #endif
 
@@ -1212,8 +1234,33 @@ int main(int argc, char* argv[]) {
         if (results[i].data == NULL) {
             continue;
         }
+
         std::string final_image_path = i > 0 ? dummy_name + "_" + std::to_string(i + 1) + ext : dummy_name + ext;
-        if(is_jpg) {
+
+#ifdef SD_EXAMPLES_IMG2IMG_REPEAT
+        if (glove_recurrent_var.l_img2img_sequence) {
+        
+            std::string dummy_name2       = dummy_name + "-" + std::to_string(glove_recurrent_var.count);
+            std::string final_image_path2 = i > 0 ? dummy_name2 + "_" + std::to_string(i + 1) + ext : dummy_name2 + ext;
+            if (is_jpg) {
+                stbi_write_jpg(final_image_path2.c_str(), results[i].width, results[i].height, results[i].channel,
+                               results[i].data, 90, get_image_params(params, params.seed + i).c_str());
+                printf("save result JPEG image to '%s'\n", final_image_path2.c_str());
+            } else {
+                stbi_write_png(final_image_path2.c_str(), results[i].width, results[i].height, results[i].channel,
+                               results[i].data, 0, get_image_params(params, params.seed + i).c_str());
+                printf("save result PNG image to '%s'\n", final_image_path2.c_str());
+            }
+
+            // Caution : memory leak here
+            sd_image_t* result_cropped = crop(results[i], glove_parametrization.get_images_sequence_params().get_crop().left, glove_parametrization.get_images_sequence_params().get_crop().right, glove_parametrization.get_images_sequence_params().get_crop().up, glove_parametrization.get_images_sequence_params().get_crop().bottom);
+            results[i] = *result_cropped;
+            delete result_cropped;
+
+        }
+#endif
+
+        if (is_jpg) {
             stbi_write_jpg(final_image_path.c_str(), results[i].width, results[i].height, results[i].channel,
                            results[i].data, 90, get_image_params(params, params.seed + i).c_str());
             printf("save result JPEG image to '%s'\n", final_image_path.c_str());
@@ -1222,6 +1269,7 @@ int main(int argc, char* argv[]) {
                            results[i].data, 0, get_image_params(params, params.seed + i).c_str());
             printf("save result PNG image to '%s'\n", final_image_path.c_str());
         }
+
         free(results[i].data);
         results[i].data = NULL;
     }
@@ -1235,6 +1283,13 @@ int main(int argc, char* argv[]) {
 
 #ifdef SD_EXAMPLES_GLOVE_GUI
     glove_recurrent_var.params = glove_parametrization;
+    glove_recurrent_var.count++;
+#ifdef SD_EXAMPLES_IMG2IMG_REPEAT
+    glove_recurrent_var.Nframes = glove_parametrization.get_images_sequence_params().get_Nframes();
+    if (glove_recurrent_var.l_img2img_sequence && glove_recurrent_var.count == glove_recurrent_var.Nframes + 1) {
+        glove_recurrent_var.l_img2img_sequence = false;
+    }
+#endif
 #endif
 
     return 0;

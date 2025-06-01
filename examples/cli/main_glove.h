@@ -57,6 +57,14 @@ glvm_parametrization(GlvSDScaleStrength, "Scale/Strength params",
     style_ratio, SlvProportion, "--style-ratio", "strength for keeping input identity (default: 20%)", 0.2f,
     control_strength, SlvProportion, "--control-strength", "strength to apply Control Net (default: 0.9) \n1.0 corresponds to full destruction of information in init", 0.9f)
 
+#ifdef SD_EXAMPLES_IMG2IMG_REPEAT
+glvm_parametrization(GlvSDImagesSequence, "Images sequence params",
+    crop, SlvSides2d<unsigned int>, "Crop", "Image crop at each frame", SlvSides2d<unsigned int>({2, 2, 2, 2}),
+    Nframes, unsigned int, "Nframes", "Number of frames", 100)
+#else
+    typedef nullptr_t GlvSDAnim;
+#endif
+
 glvm_parametrization(GlvSDParams, "SD params",
     mode, ProcessingMode, "--mode", "run mode (txt2img or img2img or convert, default: txt2img)", ProcessingMode::text_to_image,
     model, SlvFile, "--model", "path to full model", SlvFile("./", SlvFileExtensions({".safetensors", ".ckpt"}), SlvFile::IO::Read),
@@ -75,6 +83,47 @@ glvm_parametrization(GlvSDParams, "SD params",
     steps, unsigned int, "--steps", "number of sample steps (default: 20)", 20,
     seed, int, "--seed", "RNG seed (default: 42, use random seed for < 0)", 42,
     batch_count, unsigned int, "--batch-count", "number of images to generate", 1,
-    advanced_params, GlvSDParamsAdvanced, "Advanced", "", GlvSDParamsAdvanced())
+    advanced_params, GlvSDParamsAdvanced, "Advanced", "", GlvSDParamsAdvanced(),
+    images_sequence_params, GlvSDImagesSequence, "Images sequence", "Used only with img2img mode and if --init-img points to the same image as --output", GlvSDImagesSequence())
 
 GLOVE_APP_CLI_PARAMETRIZATION_OUTPUT_DIRECTORY(GlvSDParams, "--output")
+
+
+#ifdef SD_EXAMPLES_IMG2IMG_REPEAT
+sd_image_t* crop(const sd_image_t& _image, int _left, int _right, int _up, int _bottom) {
+
+    sd_image_t* image = new sd_image_t;
+
+    image->width = _image.width - _left - _right;
+    image->height  = _image.height - _up - _bottom;
+    image->channel = _image.channel;
+    image->data    = (uint8_t*)malloc(image->width * image->height * image->channel);
+
+    uint8_t* data = _image.data;
+    uint8_t* data2 = image->data;
+    for (int m = 0; m < _image.width * _image.height * _image.channel; m++) {
+    
+        int j = (m - m % (_image.width * _image.channel)) / (_image.width * _image.channel);
+        int n = m - j * _image.width * _image.channel;
+        int i = (n - n % _image.channel) / (_image.channel);
+        int k = n - i * _image.channel;
+
+        bool l_ok = false;
+
+        if (i >= _left) {
+            if (i < _image.width - _right) {
+                if (j >= _up) {
+                    if (j < _image.height - _bottom) {
+                        *data2 = *data;
+                        data2++;
+                        l_ok = true;
+                    }
+                }
+            }
+        }
+        data++;
+    }
+
+    return image;
+}
+#endif

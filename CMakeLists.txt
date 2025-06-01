@@ -35,6 +35,7 @@ option(SD_BUILD_SHARED_LIBS          "sd: build shared libs" OFF)
 #option(SD_BUILD_SERVER               "sd: build server example"                           ON)
 option(SD_EXAMPLES_GLOVE_GUI         "sd: use glove gui for examples" OFF)
 option(SD_EXAMPLES_GLOVE_GUI_DESKTOP "sd: if SD_EXAMPLES_GLOVE_GUI, gui is configured as autonomous desktop application" ON)
+option(SD_EXAMPLES_IMG2IMG_REPEAT    "sd: if SD_EXAMPLES_GLOVE_GUI, auto repeat mode for img2img to create images sequences" ON)
 set(QT_VERSION "6" CACHE STRING "Qt version")
 set_property(CACHE QT_VERSION PROPERTY STRINGS 5 6)
 
