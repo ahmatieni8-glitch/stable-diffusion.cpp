@@ -916,9 +916,11 @@ int main(int argc, char* argv[]) {
     uint8_t* control_image_buffer = NULL;
     uint8_t* mask_image_buffer    = NULL;
 
+   #ifdef SD_EXAMPLES_GLOVE_GUI
     if (is_glove_recurrent) {
         vae_decode_only = false;
     }
+   #endif
 
     if (params.mode == IMG2IMG || params.mode == IMG2VID) {
         vae_decode_only = false;
