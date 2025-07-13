@@ -4,7 +4,7 @@
 #define GLOVE_ENABLE_JSON
 #include "glove.h"
 
-glvm_SlvEnum_named(ProcessingMode, text_to_image, "txt2img", image_to_image, "img2img", convert_image, "convert");
+glvm_SlvEnum(ProcessingMode, img_gen, vid_gen, convert);
 glvm_SlvEnum_named(WeightType, weight_file_type, "", f32, "f32", f16, "f16", q4_0, "q4_0", q4_1, "q4_1", q5_0, "q5_0", q5_1, "q5_1", q8_0, "q8_0", q2_k, "q2_k", q3_k, "q3_k", q4_k, "q4_k");
 glvm_SlvEnum_named(SamplingMethod, euler, "euler", euler_a, "euler_a", heun, "heun", dpm2, "dpm2", dpmpp2s_a, "dpm++2s_a", dpmpp2m, "dpm++2m", dpmpp2mv2, "dpm++2mv2", ipndm, "ipndm", ipndm_v, "ipndm_v", lcm, "lcm", ddim_trailing, "ddim_trailing", tcd, "tcd");
 glvm_SlvEnum(Rng, std_default, cuda);
@@ -66,7 +66,7 @@ glvm_parametrization(GlvSDImagesSequence, "Images sequence params",
 #endif
 
 glvm_parametrization(GlvSDParams, "SD params",
-    mode, ProcessingMode, "--mode", "run mode (txt2img or img2img or convert, default: txt2img)", ProcessingMode::text_to_image,
+    mode, ProcessingMode, "--mode", "run mode (txt2img or img2img or convert, default: txt2img)", ProcessingMode::img_gen,
     model, SlvFile, "--model", "path to full model", SlvFile("./", SlvFileExtensions({".safetensors", ".ckpt"}), SlvFile::IO::Read),
     diffusion_model, SlvFile, "--diffusion-model", "path to the standalone diffusion model", SlvFile(SlvFileExtensions({".gguf"}), SlvFile::IO::Read),
     model_addons, GlvSDModelAddons, "Model addons", "", GlvSDModelAddons(),
