@@ -112,7 +112,7 @@ std::vector<std::string> get_files_from_dir(const std::string& dir) {
     sprintf(directoryPath, "%s\\%s\\*", currentDirectory, dir.c_str());
 
     // Find the first file in the directory
-    hFind = FindFirstFile(directoryPath, &findFileData);
+    hFind               = FindFirstFile(directoryPath, &findFileData);
     bool isAbsolutePath = false;
     // Check if the directory was found
     if (hFind == INVALID_HANDLE_VALUE) {
@@ -121,7 +121,7 @@ std::vector<std::string> get_files_from_dir(const std::string& dir) {
         char directoryPathAbsolute[MAX_PATH];
         sprintf(directoryPathAbsolute, "%s*", dir.c_str());
 
-        hFind = FindFirstFile(directoryPathAbsolute, &findFileData);
+        hFind          = FindFirstFile(directoryPathAbsolute, &findFileData);
         isAbsolutePath = true;
         if (hFind == INVALID_HANDLE_VALUE) {
             printf("Absolute path was also wrong.\n");
@@ -439,10 +439,6 @@ const char* sd_get_system_info() {
     ss << "    VSX = " << ggml_cpu_has_vsx() << std::endl;
     snprintf(buffer, sizeof(buffer), "%s", ss.str().c_str());
     return buffer;
-}
-
-const char* sd_type_name(enum sd_type_t type) {
-    return ggml_type_name((ggml_type)type);
 }
 
 sd_image_f32_t sd_image_t_to_sd_image_f32_t(sd_image_t image) {

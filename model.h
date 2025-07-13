@@ -12,19 +12,21 @@
 
 #include "ggml-backend.h"
 #include "ggml.h"
+#include "gguf.h"
 #include "json.hpp"
 #include "zip.h"
-#include "gguf.h"
 
 #define SD_MAX_DIMS 5
 
 enum SDVersion {
     VERSION_SD1,
     VERSION_SD1_INPAINT,
+    VERSION_SD1_PIX2PIX,
     VERSION_SD2,
     VERSION_SD2_INPAINT,
     VERSION_SDXL,
     VERSION_SDXL_INPAINT,
+    VERSION_SDXL_PIX2PIX,
     VERSION_SVD,
     VERSION_SD3,
     VERSION_FLUX,
@@ -47,7 +49,7 @@ static inline bool sd_version_is_sd3(SDVersion version) {
 }
 
 static inline bool sd_version_is_sd1(SDVersion version) {
-    if (version == VERSION_SD1 || version == VERSION_SD1_INPAINT) {
+    if (version == VERSION_SD1 || version == VERSION_SD1_INPAINT || version == VERSION_SD1_PIX2PIX) {
         return true;
     }
     return false;
@@ -61,7 +63,7 @@ static inline bool sd_version_is_sd2(SDVersion version) {
 }
 
 static inline bool sd_version_is_sdxl(SDVersion version) {
-    if (version == VERSION_SDXL || version == VERSION_SDXL_INPAINT) {
+    if (version == VERSION_SDXL || version == VERSION_SDXL_INPAINT || version == VERSION_SDXL_PIX2PIX) {
         return true;
     }
     return false;
@@ -79,6 +81,14 @@ static inline bool sd_version_is_dit(SDVersion version) {
         return true;
     }
     return false;
+}
+
+static inline bool sd_version_is_unet_edit(SDVersion version) {
+    return version == VERSION_SD1_PIX2PIX || version == VERSION_SDXL_PIX2PIX;
+}
+
+static bool sd_version_is_inpaint_or_unet_edit(SDVersion version) {
+    return sd_version_is_unet_edit(version) || sd_version_is_inpaint(version);
 }
 
 enum PMVersion {
@@ -210,6 +220,7 @@ public:
     std::map<std::string, enum ggml_type> tensor_storages_types;
 
     bool init_from_file(const std::string& file_path, const std::string& prefix = "");
+    bool model_is_unet();
     SDVersion get_sd_version();
     ggml_type get_sd_wtype();
     ggml_type get_conditioner_wtype();
@@ -221,7 +232,7 @@ public:
                       ggml_backend_t backend,
                       std::set<std::string> ignore_tensors = {});
 
-    bool save_to_gguf_file(const std::string& file_path, ggml_type type);
+    bool save_to_gguf_file(const std::string& file_path, ggml_type type, const std::string& tensor_type_rules);
     bool tensor_should_be_converted(const TensorStorage& tensor_storage, ggml_type type);
     int64_t get_params_mem_size(ggml_backend_t backend, ggml_type type = GGML_TYPE_COUNT);
     ~ModelLoader() = default;
