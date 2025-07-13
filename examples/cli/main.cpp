@@ -12,6 +12,10 @@
 // #include "preprocessing.hpp"
 #include "stable-diffusion.h"
 
+#ifdef SD_EXAMPLES_GLOVE_GUI
+#include "main_glove.h"
+#endif
+
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_STATIC
 #include "stb_image.h"
@@ -735,7 +739,6 @@ void sd_log_cb(enum sd_log_level_t level, const char* log, void* data) {
 }
 
 #ifdef SD_EXAMPLES_GLOVE_GUI
-#include "main_glove.h"
 #ifdef SD_EXAMPLES_GLOVE_GUI_DESKTOP
 #pragma GLOVE_APP_MSVC_NO_CONSOLE
 #endif
